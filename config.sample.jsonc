@@ -1,0 +1,12 @@
+{
+  // 禁止エリア（Globパターン）
+  // これらのパスに変更がある場合、pushがブロックされます
+  "forbiddenPaths": [
+    ".github/"
+  ],
+
+  // 禁止時の動作
+  // - "error": エラーを表示して終了
+  // - "prompt": ユーザーに確認を求める
+  "onForbidden": "error"
+}
