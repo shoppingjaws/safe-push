@@ -18,7 +18,9 @@ export function createPushCommand(): Command {
     .description("Check and push if allowed")
     .option("-f, --force", "Bypass safety checks")
     .option("--dry-run", "Show what would be pushed without actually pushing")
-    .action(async (options: { force?: boolean; dryRun?: boolean }) => {
+    .allowUnknownOption()
+    .action(async (options: { force?: boolean; dryRun?: boolean }, command: Command) => {
+      const gitArgs = command.args;
       try {
         // Gitリポジトリ内か確認
         if (!(await isGitRepository())) {
@@ -43,7 +45,7 @@ export function createPushCommand(): Command {
             process.exit(0);
           }
 
-          const result = await execPush();
+          const result = await execPush(gitArgs);
           if (result.success) {
             printSuccess("Push successful");
             process.exit(0);
@@ -73,7 +75,7 @@ export function createPushCommand(): Command {
                 process.exit(0);
               }
 
-              const result = await execPush();
+              const result = await execPush(gitArgs);
               if (result.success) {
                 printSuccess("Push successful");
                 process.exit(0);
@@ -96,7 +98,7 @@ export function createPushCommand(): Command {
           process.exit(0);
         }
 
-        const result = await execPush();
+        const result = await execPush(gitArgs);
         if (result.success) {
           printSuccess("Push successful");
           process.exit(0);
