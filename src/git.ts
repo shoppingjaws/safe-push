@@ -106,21 +106,36 @@ export async function execPush(
   args: string[] = [],
   remote = "origin"
 ): Promise<{ success: boolean; output: string }> {
-  const branch = await getCurrentBranch();
-  const isNew = await isNewBranch(remote);
+  let pushArgs: string[];
 
-  const pushArgs = ["push"];
+  // ユーザーがremote/refspecを明示的に指定したか判定
+  const hasUserRefspec = args.some((arg) => !arg.startsWith("-"));
 
-  // 新規ブランチの場合は-uオプションを追加
-  if (isNew) {
-    pushArgs.push("-u");
-  }
+  if (hasUserRefspec) {
+    // ユーザー指定のremote/refspecをそのまま使用
+    pushArgs = ["push", ...args];
+  } else {
+    // 自動でremote/branchを決定
+    const branch = await getCurrentBranch();
+    const isNew = await isNewBranch(remote);
 
-  pushArgs.push(remote, branch);
+    pushArgs = ["push"];
 
-  // 追加の引数がある場合
-  if (args.length > 0) {
-    pushArgs.push(...args);
+    // 新規ブランチ、またはユーザーが-uを指定した場合に追加
+    const hasSetUpstream = args.some(
+      (a) => a === "-u" || a === "--set-upstream"
+    );
+    if (isNew || hasSetUpstream) {
+      pushArgs.push("-u");
+    }
+
+    pushArgs.push(remote, branch);
+
+    // -u/--set-upstream以外のフラグを追加
+    const remainingFlags = args.filter(
+      (a) => a !== "-u" && a !== "--set-upstream"
+    );
+    pushArgs.push(...remainingFlags);
   }
 
   try {
