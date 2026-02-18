@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { loadConfig } from "../config";
-import { checkPush } from "../checker";
+import { checkPush, checkVisibility } from "../checker";
 import { isGitRepository, hasCommits, execPush } from "../git";
 import {
   printError,
@@ -35,6 +35,22 @@ export function createPushCommand(): Command {
         }
 
         const config = loadConfig();
+
+        // visibility チェック（--force でもバイパスできない）
+        if (config.allowedVisibility && config.allowedVisibility.length > 0) {
+          try {
+            const visibilityResult = await checkVisibility(config.allowedVisibility);
+            if (visibilityResult && !visibilityResult.allowed) {
+              printError(visibilityResult.reason);
+              process.exit(1);
+            }
+          } catch (error) {
+            printError(
+              `Failed to check repository visibility. Ensure 'gh' CLI is installed and authenticated.\n  ${error instanceof Error ? error.message : String(error)}`
+            );
+            process.exit(1);
+          }
+        }
 
         // --forceオプションが指定されている場合はチェックをスキップ
         if (options.force) {

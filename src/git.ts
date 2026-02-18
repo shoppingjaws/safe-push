@@ -153,6 +153,29 @@ export async function execPush(
 }
 
 /**
+ * リポジトリの visibility を取得（gh CLI を使用）
+ */
+export async function getRepoVisibility(): Promise<string> {
+  const command = "gh repo view --json visibility --jq '.visibility'";
+  try {
+    const result = await $`gh repo view --json visibility --jq .visibility`.quiet();
+    return result.stdout.toString().trim().toLowerCase();
+  } catch (error) {
+    if (error && typeof error === "object" && "exitCode" in error) {
+      const exitCode = (error as { exitCode: number }).exitCode;
+      const stderr =
+        "stderr" in error ? String((error as { stderr: unknown }).stderr) : "";
+      throw new GitError(
+        `Failed to get repository visibility: ${stderr || command}`,
+        command,
+        exitCode
+      );
+    }
+    throw new GitError(`Failed to get repository visibility: ${command}`, command, null);
+  }
+}
+
+/**
  * Gitリポジトリ内かどうかを確認
  */
 export async function isGitRepository(): Promise<boolean> {

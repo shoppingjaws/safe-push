@@ -88,11 +88,15 @@ export function saveConfig(config: Config, configPath?: string): void {
     fs.mkdirSync(dir, { recursive: true });
   }
 
+  const allowedVisibilitySection = config.allowedVisibility
+    ? `,\n  // 許可するリポジトリ visibility: "public" | "private" | "internal"\n  "allowedVisibility": ${JSON.stringify(config.allowedVisibility)}`
+    : "";
+
   const content = `{
   // 禁止エリア（Globパターン）
   "forbiddenPaths": ${JSON.stringify(config.forbiddenPaths, null, 4).replace(/\n/g, "\n  ")},
   // 禁止時の動作: "error" | "prompt"
-  "onForbidden": "${config.onForbidden}"
+  "onForbidden": "${config.onForbidden}"${allowedVisibilitySection}
 }
 `;
 

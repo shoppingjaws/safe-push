@@ -1,11 +1,44 @@
-import type { Config, CheckResult } from "./types";
+import type { Config, CheckResult, RepoVisibility } from "./types";
 import {
   getCurrentBranch,
   isNewBranch,
   getLastCommitAuthorEmail,
   getLocalEmail,
   getDiffFiles,
+  getRepoVisibility,
 } from "./git";
+
+/**
+ * Visibility チェック結果
+ */
+export interface VisibilityCheckResult {
+  allowed: boolean;
+  reason: string;
+  visibility: string;
+}
+
+/**
+ * リポジトリの visibility が許可リストに含まれるかチェック
+ * allowedVisibility が未設定または空配列の場合は null を返す（チェック不要）
+ */
+export async function checkVisibility(
+  allowedVisibility?: RepoVisibility[]
+): Promise<VisibilityCheckResult | null> {
+  if (!allowedVisibility || allowedVisibility.length === 0) {
+    return null;
+  }
+
+  const visibility = await getRepoVisibility();
+  const allowed = allowedVisibility.includes(visibility as RepoVisibility);
+
+  return {
+    allowed,
+    reason: allowed
+      ? `Repository visibility "${visibility}" is allowed`
+      : `Repository visibility "${visibility}" is not in allowed list: [${allowedVisibility.join(", ")}]`,
+    visibility,
+  };
+}
 
 /**
  * ファイルパスが禁止パターンにマッチするか判定

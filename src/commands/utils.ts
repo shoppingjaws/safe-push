@@ -60,6 +60,13 @@ export function printCheckResultHuman(result: CheckResult): void {
     `  Forbidden changes:   ${details.hasForbiddenChanges ? "Yes" : "No"}`
   );
 
+  if (details.repoVisibility !== undefined) {
+    console.log(`  Repo visibility:     ${details.repoVisibility}`);
+    console.log(
+      `  Visibility allowed:  ${details.visibilityAllowed ? "Yes" : "No"}`
+    );
+  }
+
   if (details.forbiddenFiles.length > 0) {
     console.log("");
     console.log("Forbidden files changed:");

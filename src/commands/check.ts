@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { loadConfig } from "../config";
-import { checkPush } from "../checker";
+import { checkPush, checkVisibility } from "../checker";
 import { isGitRepository, hasCommits } from "../git";
 import { printError, printCheckResultJson, printCheckResultHuman } from "./utils";
 
@@ -27,6 +27,26 @@ export function createCheckCommand(): Command {
 
         const config = loadConfig();
         const result = await checkPush(config);
+
+        // visibility チェック
+        if (config.allowedVisibility && config.allowedVisibility.length > 0) {
+          try {
+            const visibilityResult = await checkVisibility(config.allowedVisibility);
+            if (visibilityResult) {
+              result.details.repoVisibility = visibilityResult.visibility;
+              result.details.visibilityAllowed = visibilityResult.allowed;
+              if (!visibilityResult.allowed) {
+                result.allowed = false;
+                result.reason = visibilityResult.reason;
+              }
+            }
+          } catch (error) {
+            result.details.repoVisibility = "unknown";
+            result.details.visibilityAllowed = false;
+            result.allowed = false;
+            result.reason = `Failed to check repository visibility. Ensure 'gh' CLI is installed and authenticated.`;
+          }
+        }
 
         if (options.json) {
           printCheckResultJson(result);

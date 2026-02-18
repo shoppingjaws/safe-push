@@ -68,6 +68,9 @@ export function createConfigCommand(): Command {
             `  forbiddenPaths: ${JSON.stringify(configData.forbiddenPaths)}`
           );
           console.log(`  onForbidden: ${configData.onForbidden}`);
+          console.log(
+            `  allowedVisibility: ${configData.allowedVisibility ? JSON.stringify(configData.allowedVisibility) : "(not set - all visibilities allowed)"}`
+          );
           console.log("");
         }
       } catch (error) {
