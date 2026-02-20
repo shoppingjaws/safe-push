@@ -139,11 +139,19 @@ export async function execPush(
   }
 
   try {
-    const output = await execGit(pushArgs);
+    const result = await $`git ${pushArgs}`.quiet();
+    const stdout = result.stdout.toString().trim();
+    const stderr = result.stderr.toString().trim();
+    const output = [stdout, stderr].filter(Boolean).join("\n");
     return { success: true, output };
   } catch (error) {
-    if (error instanceof GitError) {
-      return { success: false, output: error.message };
+    if (error && typeof error === "object" && "exitCode" in error) {
+      const stderr =
+        "stderr" in error ? String((error as { stderr: unknown }).stderr).trim() : "";
+      const stdout =
+        "stdout" in error ? String((error as { stdout: unknown }).stdout).trim() : "";
+      const output = [stdout, stderr].filter(Boolean).join("\n");
+      return { success: false, output: output || `Push failed with exit code ${(error as { exitCode: number }).exitCode}` };
     }
     return {
       success: false,

@@ -63,6 +63,9 @@ export function createPushCommand(): Command {
 
           const result = await execPush(gitArgs);
           if (result.success) {
+            if (result.output) {
+              console.log(result.output);
+            }
             printSuccess("Push successful");
             process.exit(0);
           } else {
@@ -93,6 +96,9 @@ export function createPushCommand(): Command {
 
               const result = await execPush(gitArgs);
               if (result.success) {
+                if (result.output) {
+                  console.log(result.output);
+                }
                 printSuccess("Push successful");
                 process.exit(0);
               } else {
@@ -116,6 +122,9 @@ export function createPushCommand(): Command {
 
         const result = await execPush(gitArgs);
         if (result.success) {
+          if (result.output) {
+            console.log(result.output);
+          }
           printSuccess("Push successful");
           process.exit(0);
         } else {
