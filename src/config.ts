@@ -2,6 +2,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
 import * as jsonc from "jsonc-parser";
+import { zodToJsonSchema } from "zod-to-json-schema";
 import { ConfigSchema, ConfigError, type Config } from "./types";
 
 /**
@@ -9,6 +10,34 @@ import { ConfigSchema, ConfigError, type Config } from "./types";
  */
 export function getConfigPath(): string {
   return path.join(os.homedir(), ".config", "safe-push", "config.jsonc");
+}
+
+/**
+ * JSON Schema ファイルのパス
+ */
+export function getSchemaPath(configPath?: string): string {
+  const configDir = path.dirname(configPath ?? getConfigPath());
+  return path.join(configDir, "config.schema.json");
+}
+
+/**
+ * Zod スキーマから JSON Schema を生成して保存する
+ */
+export function saveJsonSchema(configPath?: string): string {
+  const schemaPath = getSchemaPath(configPath);
+  const dir = path.dirname(schemaPath);
+
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+
+  const jsonSchema = zodToJsonSchema(ConfigSchema, {
+    name: "SafePushConfig",
+    $refStrategy: "none",
+  });
+
+  fs.writeFileSync(schemaPath, JSON.stringify(jsonSchema, null, 2) + "\n", "utf-8");
+  return schemaPath;
 }
 
 /**
@@ -97,6 +126,7 @@ export function saveConfig(config: Config, configPath?: string): void {
     : "";
 
   const content = `{
+  "$schema": "./config.schema.json",
   // 禁止エリア（Globパターン）
   "forbiddenPaths": ${JSON.stringify(config.forbiddenPaths, null, 4).replace(/\n/g, "\n  ")},
   // 禁止時の動作: "error" | "prompt"
@@ -121,5 +151,6 @@ export function initConfig(
   }
 
   saveConfig(getDefaultConfig(), filePath);
+  saveJsonSchema(filePath);
   return { created: true, path: filePath };
 }
