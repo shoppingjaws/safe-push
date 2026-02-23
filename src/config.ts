@@ -92,11 +92,15 @@ export function saveConfig(config: Config, configPath?: string): void {
     ? `,\n  // 許可するリポジトリ visibility: "public" | "private" | "internal"\n  "allowedVisibility": ${JSON.stringify(config.allowedVisibility)}`
     : "";
 
+  const traceSection = config.trace
+    ? `,\n  // トレーシング: "otlp" | "console" （省略で無効）\n  "trace": "${config.trace}"`
+    : "";
+
   const content = `{
   // 禁止エリア（Globパターン）
   "forbiddenPaths": ${JSON.stringify(config.forbiddenPaths, null, 4).replace(/\n/g, "\n  ")},
   // 禁止時の動作: "error" | "prompt"
-  "onForbidden": "${config.onForbidden}"${allowedVisibilitySection}
+  "onForbidden": "${config.onForbidden}"${allowedVisibilitySection}${traceSection}
 }
 `;
 

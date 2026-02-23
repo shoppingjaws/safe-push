@@ -4,6 +4,7 @@ import { createCheckCommand } from "./commands/check";
 import { createPushCommand } from "./commands/push";
 import { createConfigCommand } from "./commands/config";
 import { initTelemetry, shutdownTelemetry } from "./telemetry";
+import { loadConfig } from "./config";
 import { ExitError } from "./types";
 
 const program = new Command();
@@ -14,11 +15,21 @@ program
   .version("0.3.0")
   .option("--trace [exporter]", "Enable OpenTelemetry tracing (otlp|console)");
 
-program.hook("preAction", async (_thisCommand, actionCommand) => {
+program.hook("preAction", async () => {
   const traceOpt = program.opts().trace;
+
+  // CLI フラグ優先、なければ config を参照
+  let exporter: "otlp" | "console" | undefined;
   if (traceOpt) {
-    const exporter: "otlp" | "console" =
-      traceOpt === "otlp" ? "otlp" : "console";
+    exporter = traceOpt === "otlp" ? "otlp" : "console";
+  } else {
+    const config = loadConfig();
+    if (config.trace) {
+      exporter = config.trace;
+    }
+  }
+
+  if (exporter) {
     await initTelemetry(exporter);
   }
 });

@@ -13,12 +13,19 @@ export const RepoVisibilitySchema = z.enum(["public", "private", "internal"]);
 export type RepoVisibility = z.infer<typeof RepoVisibilitySchema>;
 
 /**
+ * トレースエクスポーター
+ */
+export const TraceExporterSchema = z.enum(["otlp", "console"]);
+export type TraceExporter = z.infer<typeof TraceExporterSchema>;
+
+/**
  * 設定ファイルのスキーマ
  */
 export const ConfigSchema = z.object({
   forbiddenPaths: z.array(z.string()).default([".github/"]),
   onForbidden: OnForbiddenSchema.default("error"),
   allowedVisibility: z.array(RepoVisibilitySchema).optional(),
+  trace: TraceExporterSchema.optional(),
 });
 export type Config = z.infer<typeof ConfigSchema>;
 
