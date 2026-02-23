@@ -6,13 +6,14 @@ import { createConfigCommand } from "./commands/config";
 import { initTelemetry, shutdownTelemetry } from "./telemetry";
 import { loadConfig } from "./config";
 import { ExitError } from "./types";
+import packageJson from "../package.json";
 
 const program = new Command();
 
 program
   .name("safe-push")
   .description("Git push safety checker - blocks pushes to forbidden areas")
-  .version("0.3.0")
+  .version(packageJson.version)
   .option("--trace [exporter]", "Enable OpenTelemetry tracing (otlp|console)");
 
 program.hook("preAction", async () => {
