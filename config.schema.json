@@ -1,0 +1,47 @@
+{
+  "$ref": "#/definitions/SafePushConfig",
+  "definitions": {
+    "SafePushConfig": {
+      "type": "object",
+      "properties": {
+        "forbiddenPaths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            ".github/"
+          ]
+        },
+        "onForbidden": {
+          "type": "string",
+          "enum": [
+            "error",
+            "prompt"
+          ],
+          "default": "error"
+        },
+        "allowedVisibility": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "public",
+              "private",
+              "internal"
+            ]
+          }
+        },
+        "trace": {
+          "type": "string",
+          "enum": [
+            "otlp",
+            "console"
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}
