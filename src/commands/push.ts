@@ -9,6 +9,8 @@ import {
   printCheckResultHuman,
   promptConfirm,
 } from "./utils";
+import { ExitError } from "../types";
+import { withSpan } from "../telemetry";
 
 /**
  * pushコマンドを作成
@@ -21,20 +23,26 @@ export function createPushCommand(): Command {
     .allowUnknownOption()
     .action(async (options: { force?: boolean; dryRun?: boolean }, command: Command) => {
       const gitArgs = command.args;
-      try {
+      await withSpan("safe-push.push", async (rootSpan) => {
         // Gitリポジトリ内か確認
         if (!(await isGitRepository())) {
           printError("Not a git repository");
-          process.exit(1);
+          throw new ExitError(1);
         }
 
         // コミットが存在するか確認
         if (!(await hasCommits())) {
           printError("No commits found");
-          process.exit(1);
+          throw new ExitError(1);
         }
 
         const config = loadConfig();
+
+        rootSpan.addEvent("config.loaded", {
+          forbiddenPaths: JSON.stringify(config.forbiddenPaths),
+          onForbidden: config.onForbidden,
+          hasVisibilityRule: !!(config.allowedVisibility && config.allowedVisibility.length > 0),
+        });
 
         // visibility チェック（--force でもバイパスできない）
         if (config.allowedVisibility && config.allowedVisibility.length > 0) {
@@ -42,13 +50,14 @@ export function createPushCommand(): Command {
             const visibilityResult = await checkVisibility(config.allowedVisibility);
             if (visibilityResult && !visibilityResult.allowed) {
               printError(visibilityResult.reason);
-              process.exit(1);
+              throw new ExitError(1);
             }
           } catch (error) {
+            if (error instanceof ExitError) throw error;
             printError(
               `Failed to check repository visibility. Ensure 'gh' CLI is installed and authenticated.\n  ${error instanceof Error ? error.message : String(error)}`
             );
-            process.exit(1);
+            throw new ExitError(1);
           }
         }
 
@@ -58,7 +67,7 @@ export function createPushCommand(): Command {
 
           if (options.dryRun) {
             printSuccess("Dry run: would push (checks bypassed)");
-            process.exit(0);
+            throw new ExitError(0);
           }
 
           const result = await execPush(gitArgs);
@@ -67,10 +76,10 @@ export function createPushCommand(): Command {
               console.log(result.output);
             }
             printSuccess("Push successful");
-            process.exit(0);
+            return;
           } else {
             printError(`Push failed: ${result.output}`);
-            process.exit(1);
+            throw new ExitError(1);
           }
         }
 
@@ -91,7 +100,7 @@ export function createPushCommand(): Command {
             if (confirmed) {
               if (options.dryRun) {
                 printSuccess("Dry run: would push (user confirmed)");
-                process.exit(0);
+                throw new ExitError(0);
               }
 
               const result = await execPush(gitArgs);
@@ -100,24 +109,24 @@ export function createPushCommand(): Command {
                   console.log(result.output);
                 }
                 printSuccess("Push successful");
-                process.exit(0);
+                return;
               } else {
                 printError(`Push failed: ${result.output}`);
-                process.exit(1);
+                throw new ExitError(1);
               }
             } else {
               printError("Push cancelled by user");
-              process.exit(1);
+              throw new ExitError(1);
             }
           }
 
-          process.exit(1);
+          throw new ExitError(1);
         }
 
         // チェック通過、pushを実行
         if (options.dryRun) {
           printSuccess("Dry run: would push");
-          process.exit(0);
+          throw new ExitError(0);
         }
 
         const result = await execPush(gitArgs);
@@ -126,16 +135,11 @@ export function createPushCommand(): Command {
             console.log(result.output);
           }
           printSuccess("Push successful");
-          process.exit(0);
+          return;
         } else {
           printError(`Push failed: ${result.output}`);
-          process.exit(1);
+          throw new ExitError(1);
         }
-      } catch (error) {
-        printError(
-          `Push failed: ${error instanceof Error ? error.message : String(error)}`
-        );
-        process.exit(1);
-      }
+      });
     });
 }

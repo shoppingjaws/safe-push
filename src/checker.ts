@@ -7,6 +7,7 @@ import {
   getDiffFiles,
   getRepoVisibility,
 } from "./git";
+import { withSpan } from "./telemetry";
 
 /**
  * Visibility チェック結果
@@ -24,20 +25,27 @@ export interface VisibilityCheckResult {
 export async function checkVisibility(
   allowedVisibility?: RepoVisibility[]
 ): Promise<VisibilityCheckResult | null> {
-  if (!allowedVisibility || allowedVisibility.length === 0) {
-    return null;
-  }
+  return withSpan("safe-push.check.visibility", async (span) => {
+    if (!allowedVisibility || allowedVisibility.length === 0) {
+      return null;
+    }
 
-  const visibility = await getRepoVisibility();
-  const allowed = allowedVisibility.includes(visibility as RepoVisibility);
+    const visibility = await getRepoVisibility();
+    const allowed = allowedVisibility.includes(visibility as RepoVisibility);
 
-  return {
-    allowed,
-    reason: allowed
-      ? `Repository visibility "${visibility}" is allowed`
-      : `Repository visibility "${visibility}" is not in allowed list: [${allowedVisibility.join(", ")}]`,
-    visibility,
-  };
+    span.addEvent("visibility.result", {
+      value: visibility,
+      allowed,
+    });
+
+    return {
+      allowed,
+      reason: allowed
+        ? `Repository visibility "${visibility}" is allowed`
+        : `Repository visibility "${visibility}" is not in allowed list: [${allowedVisibility.join(", ")}]`,
+      visibility,
+    };
+  });
 }
 
 /**
@@ -88,58 +96,69 @@ function findForbiddenFiles(
  * (禁止エリア変更なし) AND (新規ブランチ OR 最終コミットが自分)
  */
 export async function checkPush(config: Config): Promise<CheckResult> {
-  const currentBranch = await getCurrentBranch();
-  const newBranch = await isNewBranch();
-  const authorEmail = await getLastCommitAuthorEmail();
-  const localEmail = await getLocalEmail();
-  const diffFiles = await getDiffFiles();
+  return withSpan("safe-push.check.push", async (span) => {
+    const currentBranch = await getCurrentBranch();
+    const newBranch = await isNewBranch();
+    const authorEmail = await getLastCommitAuthorEmail();
+    const localEmail = await getLocalEmail();
+    const diffFiles = await getDiffFiles();
 
-  const forbiddenFiles = findForbiddenFiles(diffFiles, config.forbiddenPaths);
-  const hasForbiddenChanges = forbiddenFiles.length > 0;
-  const isOwnLastCommit =
-    authorEmail.toLowerCase() === localEmail.toLowerCase();
+    const forbiddenFiles = findForbiddenFiles(diffFiles, config.forbiddenPaths);
+    const hasForbiddenChanges = forbiddenFiles.length > 0;
+    const isOwnLastCommit =
+      authorEmail.toLowerCase() === localEmail.toLowerCase();
 
-  const details = {
-    isNewBranch: newBranch,
-    isOwnLastCommit,
-    hasForbiddenChanges,
-    forbiddenFiles,
-    currentBranch,
-    authorEmail,
-    localEmail,
-  };
-
-  // 禁止エリアに変更がある場合は常にブロック
-  if (hasForbiddenChanges) {
-    return {
-      allowed: false,
-      reason: `Forbidden files detected: ${forbiddenFiles.join(", ")}`,
-      details,
+    const details = {
+      isNewBranch: newBranch,
+      isOwnLastCommit,
+      hasForbiddenChanges,
+      forbiddenFiles,
+      currentBranch,
+      authorEmail,
+      localEmail,
     };
-  }
 
-  // 新規ブランチの場合は許可
-  if (newBranch) {
-    return {
-      allowed: true,
-      reason: "New branch - no restrictions",
-      details,
-    };
-  }
+    let result: CheckResult;
 
-  // 最終コミットが自分の場合は許可
-  if (isOwnLastCommit) {
-    return {
-      allowed: true,
-      reason: "Last commit is yours",
-      details,
-    };
-  }
+    // 禁止エリアに変更がある場合は常にブロック
+    if (hasForbiddenChanges) {
+      result = {
+        allowed: false,
+        reason: `Forbidden files detected: ${forbiddenFiles.join(", ")}`,
+        details,
+      };
+    } else if (newBranch) {
+      // 新規ブランチの場合は許可
+      result = {
+        allowed: true,
+        reason: "New branch - no restrictions",
+        details,
+      };
+    } else if (isOwnLastCommit) {
+      // 最終コミットが自分の場合は許可
+      result = {
+        allowed: true,
+        reason: "Last commit is yours",
+        details,
+      };
+    } else {
+      // それ以外はブロック
+      result = {
+        allowed: false,
+        reason: `Last commit is by someone else (${authorEmail})`,
+        details,
+      };
+    }
 
-  // それ以外はブロック
-  return {
-    allowed: false,
-    reason: `Last commit is by someone else (${authorEmail})`,
-    details,
-  };
+    span.addEvent("check.result", {
+      allowed: result.allowed,
+      reason: result.reason,
+      isNewBranch: newBranch,
+      isOwnLastCommit,
+      hasForbiddenChanges,
+      forbiddenFileCount: forbiddenFiles.length,
+    });
+
+    return result;
+  });
 }

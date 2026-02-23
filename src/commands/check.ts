@@ -3,6 +3,8 @@ import { loadConfig } from "../config";
 import { checkPush, checkVisibility } from "../checker";
 import { isGitRepository, hasCommits } from "../git";
 import { printError, printCheckResultJson, printCheckResultHuman } from "./utils";
+import { ExitError } from "../types";
+import { withSpan } from "../telemetry";
 
 /**
  * checkコマンドを作成
@@ -12,20 +14,27 @@ export function createCheckCommand(): Command {
     .description("Check if push is allowed")
     .option("--json", "Output result as JSON")
     .action(async (options: { json?: boolean }) => {
-      try {
+      await withSpan("safe-push.check", async (rootSpan) => {
         // Gitリポジトリ内か確認
         if (!(await isGitRepository())) {
           printError("Not a git repository");
-          process.exit(1);
+          throw new ExitError(1);
         }
 
         // コミットが存在するか確認
         if (!(await hasCommits())) {
           printError("No commits found");
-          process.exit(1);
+          throw new ExitError(1);
         }
 
         const config = loadConfig();
+
+        rootSpan.addEvent("config.loaded", {
+          forbiddenPaths: JSON.stringify(config.forbiddenPaths),
+          onForbidden: config.onForbidden,
+          hasVisibilityRule: !!(config.allowedVisibility && config.allowedVisibility.length > 0),
+        });
+
         const result = await checkPush(config);
 
         // visibility チェック
@@ -41,6 +50,7 @@ export function createCheckCommand(): Command {
               }
             }
           } catch (error) {
+            if (error instanceof ExitError) throw error;
             result.details.repoVisibility = "unknown";
             result.details.visibilityAllowed = false;
             result.allowed = false;
@@ -54,12 +64,9 @@ export function createCheckCommand(): Command {
           printCheckResultHuman(result);
         }
 
-        process.exit(result.allowed ? 0 : 1);
-      } catch (error) {
-        printError(
-          `Check failed: ${error instanceof Error ? error.message : String(error)}`
-        );
-        process.exit(1);
-      }
+        if (!result.allowed) {
+          throw new ExitError(1);
+        }
+      });
     });
 }

@@ -67,3 +67,14 @@ export class ConfigError extends Error {
     this.name = "ConfigError";
   }
 }
+
+/**
+ * コマンドハンドラから exit code を伝搬するためのエラー。
+ * process.exit() を直接呼ばず、index.ts で shutdown 後に exit する。
+ */
+export class ExitError extends Error {
+  constructor(public readonly exitCode: number) {
+    super(`Process exiting with code ${exitCode}`);
+    this.name = "ExitError";
+  }
+}
