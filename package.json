@@ -4,15 +4,17 @@
   "description": "Git push safety checker - blocks pushes to forbidden areas",
   "type": "module",
   "bin": {
-    "safe-push": "./dist/index.js"
+    "safe-push": "./dist/index.js",
+    "safe-push-mcp": "./dist/mcp.js"
   },
   "scripts": {
-    "build": "bun build ./src/index.ts --outdir ./dist --target bun",
+    "build": "bun build ./src/index.ts ./src/mcp.ts --outdir ./dist --target bun",
     "typecheck": "tsc --noEmit",
     "dev": "bun run ./src/index.ts",
     "generate-schema": "bun run ./scripts/generate-schema.ts"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/exporter-trace-otlp-http": "^0.212.0",
     "@opentelemetry/resources": "^2.5.1",
