@@ -3,6 +3,7 @@ import { Command } from "commander";
 import { createCheckCommand } from "./commands/check";
 import { createPushCommand } from "./commands/push";
 import { createConfigCommand } from "./commands/config";
+import { createMcpCommand } from "./commands/mcp";
 import { initTelemetry, shutdownTelemetry } from "./telemetry";
 import { loadConfig } from "./config";
 import { ExitError } from "./types";
@@ -38,6 +39,7 @@ program.hook("preAction", async () => {
 program.addCommand(createCheckCommand());
 program.addCommand(createPushCommand());
 program.addCommand(createConfigCommand());
+program.addCommand(createMcpCommand());
 
 let exitCode = 0;
 try {

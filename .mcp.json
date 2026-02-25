@@ -2,10 +2,7 @@
   "mcpServers": {
     "safe-push": {
       "command": "bun",
-      "args": ["run", "./src/mcp.ts"],
-      "env": {
-        "SAFE_PUSH_GIT_ROOT": "."
-      }
+      "args": ["run", "./src/index.ts", "mcp"]
     }
   }
 }

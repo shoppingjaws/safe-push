@@ -1,14 +1,13 @@
 {
   "name": "safe-push",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Git push safety checker - blocks pushes to forbidden areas",
   "type": "module",
   "bin": {
-    "safe-push": "./dist/index.js",
-    "safe-push-mcp": "./dist/mcp.js"
+    "safe-push": "./dist/index.js"
   },
   "scripts": {
-    "build": "bun build ./src/index.ts ./src/mcp.ts --outdir ./dist --target bun",
+    "build": "bun build ./src/index.ts --outdir ./dist --target bun",
     "typecheck": "tsc --noEmit",
     "dev": "bun run ./src/index.ts",
     "generate-schema": "bun run ./scripts/generate-schema.ts"
