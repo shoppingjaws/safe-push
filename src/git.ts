@@ -101,7 +101,7 @@ export async function getDiffFiles(remote = "origin"): Promise<string[]> {
       baseBranch = `${remote}/${branch}`;
     }
 
-    const output = await execGit(["diff", "--name-only", baseBranch, "HEAD"]);
+    const output = await execGit(["diff", "--name-only", `${baseBranch}...HEAD`]);
     if (!output) {
       return [];
     }
