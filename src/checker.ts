@@ -101,7 +101,7 @@ export async function checkPush(config: Config): Promise<CheckResult> {
     const newBranch = await isNewBranch();
     const authorEmail = await getLastCommitAuthorEmail();
     const localEmail = await getLocalEmail();
-    const diffFiles = await getDiffFiles();
+    const diffFiles = await getDiffFiles("origin", localEmail);
 
     const forbiddenFiles = findForbiddenFiles(diffFiles, config.forbiddenPaths);
     const hasForbiddenChanges = forbiddenFiles.length > 0;

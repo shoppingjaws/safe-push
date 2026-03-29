@@ -77,7 +77,10 @@ export async function getLocalEmail(): Promise<string> {
  * リモートとの差分ファイル一覧を取得
  * 新規ブランチの場合はmainまたはmasterとの差分を取得
  */
-export async function getDiffFiles(remote = "origin"): Promise<string[]> {
+export async function getDiffFiles(
+  remote = "origin",
+  authorEmail?: string
+): Promise<string[]> {
   return withSpan("safe-push.git.getDiffFiles", async () => {
     const branch = await getCurrentBranch();
     const isNew = await isNewBranch(remote);
@@ -101,12 +104,29 @@ export async function getDiffFiles(remote = "origin"): Promise<string[]> {
       baseBranch = `${remote}/${branch}`;
     }
 
-    const output = await execGit(["diff", "--name-only", `${baseBranch}...HEAD`]);
+    let output: string;
+    if (authorEmail) {
+      // 自分のコミットで変更されたファイルのみ取得
+      output = await execGit([
+        "log",
+        `--author=${authorEmail}`,
+        "--name-only",
+        "--format=",
+        `${baseBranch}..HEAD`,
+      ]);
+    } else {
+      output = await execGit([
+        "diff",
+        "--name-only",
+        `${baseBranch}...HEAD`,
+      ]);
+    }
     if (!output) {
       return [];
     }
 
-    return output.split("\n").filter(Boolean);
+    // 重複を除去して返す
+    return [...new Set(output.split("\n").filter(Boolean))];
   });
 }
 
