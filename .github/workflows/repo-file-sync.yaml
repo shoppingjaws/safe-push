@@ -18,7 +18,8 @@ jobs:
 
       - name: Sync Files
         id: sync
-        uses: shoppingjaws/repo-file-sync@e5604c62bd42f3815674beefb2c9cdb8026d8bd8 # 1.0.0
+        # uses: shoppingjaws/repo-file-sync@e5604c62bd42f3815674beefb2c9cdb8026d8bd8 # 1.0.0
+        uses: shoppingjaws/repo-file-sync@main
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
