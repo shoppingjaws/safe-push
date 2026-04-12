@@ -14,11 +14,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Sync Files
         id: sync
-        uses: shoppingjaws/repo-file-sync@v1.0.0
+        uses: shoppingjaws/repo-file-sync@e5604c62bd42f3815674beefb2c9cdb8026d8bd8 # 1.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
