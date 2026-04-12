@@ -1,6 +1,6 @@
 {
   "name": "safe-push",
-  "version": "0.7.3",
+  "version": "0.7.4",
   "description": "Git push safety checker - blocks pushes to forbidden areas",
   "type": "module",
   "repository": {
