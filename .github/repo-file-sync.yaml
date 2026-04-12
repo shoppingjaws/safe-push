@@ -1,0 +1,5 @@
+repos:
+  shoppingjaws/templates-bun:
+    files:
+      - .github/repo-file-sync.yaml
+      - .github/workflows/release.yaml

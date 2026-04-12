@@ -1,0 +1,29 @@
+name: Sync Files
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly on Sunday
+  workflow_dispatch:      # Manual trigger
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Sync Files
+        id: sync
+        uses: shoppingjaws/repo-file-sync@v1.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Output results
+        if: always()
+        run: |
+          echo "Files synced: ${{ steps.sync.outputs.files-synced }}"
+          echo "PR URL: ${{ steps.sync.outputs.pr-url }}"
