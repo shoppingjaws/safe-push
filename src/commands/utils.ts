@@ -76,7 +76,13 @@ export function printCheckResultHuman(result: CheckResult): void {
       if (diff) {
         console.log("    ───────────────────────────────────");
         for (const line of diff.split("\n")) {
-          console.log(`    ${line}`);
+          if (line.startsWith("+") && !line.startsWith("+++")) {
+            console.log(`    \x1b[32m${line}\x1b[0m`);
+          } else if (line.startsWith("-") && !line.startsWith("---")) {
+            console.log(`    \x1b[31m${line}\x1b[0m`);
+          } else {
+            console.log(`    ${line}`);
+          }
         }
         console.log("    ───────────────────────────────────");
       }
