@@ -3,4 +3,5 @@ repos:
     files:
       - .github/repo-file-sync.yaml
       - .github/workflows/release.yaml
+      - test
       - renovate.json
