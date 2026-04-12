@@ -9,6 +9,7 @@ on:
 jobs:
   check-version:
     runs-on: ubuntu-latest
+    environment: release
     outputs:
       should-publish: ${{ steps.check.outputs.should-publish }}
       version: ${{ steps.check.outputs.version }}
