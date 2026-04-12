@@ -40,6 +40,7 @@ export interface CheckResult {
     isOwnLastCommit: boolean;
     hasForbiddenChanges: boolean;
     forbiddenFiles: string[];
+    forbiddenDiff?: Record<string, string>;
     currentBranch: string;
     authorEmail: string;
     localEmail: string;

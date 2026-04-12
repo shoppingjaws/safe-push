@@ -72,6 +72,20 @@ export function printCheckResultHuman(result: CheckResult): void {
     console.log("Forbidden files changed:");
     for (const file of details.forbiddenFiles) {
       console.log(`  - ${file}`);
+      const diff = details.forbiddenDiff?.[file];
+      if (diff) {
+        console.log("    ───────────────────────────────────");
+        for (const line of diff.split("\n")) {
+          if (line.startsWith("+") && !line.startsWith("+++")) {
+            console.log(`    \x1b[32m${line}\x1b[0m`);
+          } else if (line.startsWith("-") && !line.startsWith("---")) {
+            console.log(`    \x1b[31m${line}\x1b[0m`);
+          } else {
+            console.log(`    ${line}`);
+          }
+        }
+        console.log("    ───────────────────────────────────");
+      }
     }
   }
   console.log("");
