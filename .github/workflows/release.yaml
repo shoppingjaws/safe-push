@@ -42,7 +42,6 @@ jobs:
   publish:
     needs: check-version
     if: needs.check-version.outputs.should-publish == 'true'
-    environment: release
     runs-on: ubuntu-latest
     permissions:
       contents: write
