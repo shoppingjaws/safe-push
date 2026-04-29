@@ -68,8 +68,12 @@ jobs:
           node-version: '24'
           registry-url: 'https://npm.pkg.github.com'
 
-      - run: bun pm pack
-      - run: bunx npm@latest publish ./${{ vars.NPM_REGISTRY_NAME }}-${{ needs.check-version.outputs.version }}.tgz
+      - name: Pack package
+        id: pack
+        run: |
+          TARBALL=$(bun pm pack 2>&1 | grep -E '\.tgz$')
+          echo "tarball=$TARBALL" >> $GITHUB_OUTPUT
+      - run: bunx npm@latest publish ./${{ steps.pack.outputs.tarball }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
