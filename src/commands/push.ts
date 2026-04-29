@@ -4,6 +4,7 @@ import { checkPush, checkVisibility } from "../checker";
 import { isGitRepository, hasCommits, execPush } from "../git";
 import {
   printError,
+  printInfo,
   printSuccess,
   printWarning,
   printCheckResultHuman,
@@ -120,6 +121,7 @@ export function createPushCommand(): Command {
             }
           }
 
+          printInfo("To bypass safety checks, use: safe-push push --force");
           throw new ExitError(1);
         }
 
