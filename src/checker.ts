@@ -5,6 +5,7 @@ import {
   getLastCommitAuthorEmail,
   getLocalEmail,
   getDiffFiles,
+  getDiffContentForFiles,
   getRepoVisibility,
 } from "./git";
 import { withSpan } from "./telemetry";
@@ -108,11 +109,16 @@ export async function checkPush(config: Config): Promise<CheckResult> {
     const isOwnLastCommit =
       authorEmail.toLowerCase() === localEmail.toLowerCase();
 
+    const forbiddenDiff = hasForbiddenChanges
+      ? await getDiffContentForFiles(forbiddenFiles)
+      : undefined;
+
     const details = {
       isNewBranch: newBranch,
       isOwnLastCommit,
       hasForbiddenChanges,
       forbiddenFiles,
+      forbiddenDiff,
       currentBranch,
       authorEmail,
       localEmail,

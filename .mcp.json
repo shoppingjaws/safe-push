@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "safe-push": {
-      "command": "bun",
-      "args": ["run", "./src/index.ts", "mcp"]
-    }
-  }
-}

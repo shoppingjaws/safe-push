@@ -74,6 +74,32 @@ export async function getLocalEmail(): Promise<string> {
 }
 
 /**
+ * リモートとの比較基準ブランチを取得
+ * 新規ブランチの場合はmainまたはmasterを返す
+ * mainもmasterもない場合はnullを返す
+ */
+async function getBaseBranch(remote = "origin"): Promise<string | null> {
+  const branch = await getCurrentBranch();
+  const isNew = await isNewBranch(remote);
+
+  if (isNew) {
+    try {
+      await execGit(["rev-parse", "--verify", `${remote}/main`]);
+      return `${remote}/main`;
+    } catch {
+      try {
+        await execGit(["rev-parse", "--verify", `${remote}/master`]);
+        return `${remote}/master`;
+      } catch {
+        return null;
+      }
+    }
+  } else {
+    return `${remote}/${branch}`;
+  }
+}
+
+/**
  * リモートとの差分ファイル一覧を取得
  * 新規ブランチの場合はmainまたはmasterとの差分を取得
  */
@@ -82,26 +108,9 @@ export async function getDiffFiles(
   authorEmail?: string
 ): Promise<string[]> {
   return withSpan("safe-push.git.getDiffFiles", async () => {
-    const branch = await getCurrentBranch();
-    const isNew = await isNewBranch(remote);
-
-    let baseBranch: string;
-    if (isNew) {
-      // 新規ブランチの場合、mainまたはmasterを基準にする
-      try {
-        await execGit(["rev-parse", "--verify", `${remote}/main`]);
-        baseBranch = `${remote}/main`;
-      } catch {
-        try {
-          await execGit(["rev-parse", "--verify", `${remote}/master`]);
-          baseBranch = `${remote}/master`;
-        } catch {
-          // mainもmasterもない場合は空の配列を返す
-          return [];
-        }
-      }
-    } else {
-      baseBranch = `${remote}/${branch}`;
+    const baseBranch = await getBaseBranch(remote);
+    if (!baseBranch) {
+      return [];
     }
 
     let output: string;
@@ -127,6 +136,43 @@ export async function getDiffFiles(
 
     // 重複を除去して返す
     return [...new Set(output.split("\n").filter(Boolean))];
+  });
+}
+
+/**
+ * 指定ファイルごとのdiffコンテンツを取得
+ */
+export async function getDiffContentForFiles(
+  files: string[],
+  remote = "origin"
+): Promise<Record<string, string>> {
+  return withSpan("safe-push.git.getDiffContentForFiles", async () => {
+    if (files.length === 0) {
+      return {};
+    }
+
+    const baseBranch = await getBaseBranch(remote);
+    if (!baseBranch) {
+      return {};
+    }
+
+    const output = await execGit(["diff", `${baseBranch}...HEAD`, "--", ...files]);
+    if (!output) {
+      return {};
+    }
+
+    // diff 出力を "diff --git" でファイルごとに分割
+    const result: Record<string, string> = {};
+    const sections = output.split(/^(?=diff --git )/m);
+    for (const section of sections) {
+      if (!section.trim()) continue;
+      // "diff --git a/path b/path" からファイルパスを抽出
+      const match = section.match(/^diff --git a\/(.+?) b\//);
+      if (match) {
+        result[match[1]] = section.trim();
+      }
+    }
+    return result;
   });
 }
 
