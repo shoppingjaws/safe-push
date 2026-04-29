@@ -4,6 +4,14 @@ A Bun CLI tool for safe Git push operations. Detects changes to forbidden areas 
 
 ## Installation
 
+### mise
+
+```bash
+mise use -g "ubi:shoppingjaws/safe-push"
+```
+
+### Manual
+
 ```bash
 bun install
 bun run build
