@@ -67,16 +67,7 @@ jobs:
         with:
           node-version: '24'
           registry-url: 'https://npm.pkg.github.com'
-
-      - name: Pack package
-        id: pack
-        run: |
-          TARBALL=$(bun pm pack 2>&1 | grep -E '\.tgz$')
-          echo "tarball=$TARBALL" >> $GITHUB_OUTPUT
-      - run: bunx npm@latest publish ./${{ steps.pack.outputs.tarball }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+      - run: bun pm pack
       - name: Create GitHub Release
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
