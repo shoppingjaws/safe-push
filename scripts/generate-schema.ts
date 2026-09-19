@@ -4,8 +4,8 @@ import { zodToJsonSchema } from "zod-to-json-schema";
 import { ConfigSchema } from "../src/types";
 
 const jsonSchema = zodToJsonSchema(ConfigSchema, {
-  name: "SafePushConfig",
-  $refStrategy: "none",
+	name: "SafePushConfig",
+	$refStrategy: "none",
 });
 
 const outPath = path.join(import.meta.dirname, "..", "config.schema.json");

@@ -56,7 +56,7 @@ Push Allowed = (No forbidden changes) AND (New branch OR Last commit is yours)
 ```
 
 | Forbidden Changes | New Branch | Last Commit Yours | Result  |
-|-------------------|------------|-------------------|---------|
+| ----------------- | ---------- | ----------------- | ------- |
 | No                | Yes        | -                 | Allowed |
 | No                | No         | Yes               | Allowed |
 | No                | No         | No                | Blocked |
@@ -68,19 +68,19 @@ Push Allowed = (No forbidden changes) AND (New branch OR Last commit is yours)
 
 ```jsonc
 {
-  // Forbidden paths (glob patterns)
-  "forbiddenPaths": [".github/"],
-  // Behavior on forbidden changes: "error" | "prompt"
-  "onForbidden": "error"
+	// Forbidden paths (glob patterns)
+	"forbiddenPaths": [".github/"],
+	// Behavior on forbidden changes: "error" | "prompt"
+	"onForbidden": "error",
 }
 ```
 
 ### Options
 
-| Key | Type | Default | Description |
-|-----|------|---------|-------------|
-| `forbiddenPaths` | `string[]` | `[".github/"]` | Paths to block changes (glob patterns) |
-| `onForbidden` | `"error" \| "prompt"` | `"error"` | Behavior when forbidden changes detected |
+| Key              | Type                  | Default        | Description                              |
+| ---------------- | --------------------- | -------------- | ---------------------------------------- |
+| `forbiddenPaths` | `string[]`            | `[".github/"]` | Paths to block changes (glob patterns)   |
+| `onForbidden`    | `"error" \| "prompt"` | `"error"`      | Behavior when forbidden changes detected |
 
 - `error`: Display error and exit
 - `prompt`: Ask user for confirmation

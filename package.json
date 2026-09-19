@@ -1,39 +1,42 @@
 {
-  "name": "@shoppingjaws/safe-push",
-  "version": "0.7.8",
-  "description": "Git push safety checker - blocks pushes to forbidden areas",
-  "type": "module",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/shoppingjaws/safe-push"
-  },
-  "bin": {
-    "safe-push": "./dist/index.js"
-  },
-  "scripts": {
-    "build": "bun build ./src/index.ts --outdir ./dist --target bun",
-    "typecheck": "tsc --noEmit",
-    "dev": "bun run ./src/index.ts",
-    "generate-schema": "bun run ./scripts/generate-schema.ts"
-  },
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.27.1",
-    "@opentelemetry/api": "^1.9.0",
-    "@opentelemetry/exporter-trace-otlp-http": "^0.212.0",
-    "@opentelemetry/resources": "^2.5.1",
-    "@opentelemetry/sdk-trace-base": "^2.5.1",
-    "@opentelemetry/semantic-conventions": "^1.39.0",
-    "commander": "^12.1.0",
-    "jsonc-parser": "^3.3.1",
-    "zod": "^3.23.8"
-  },
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
-  },
-  "devDependencies": {
-    "@types/bun": "latest",
-    "@types/node": "^22.10.0",
-    "typescript": "^5.7.2",
-    "zod-to-json-schema": "^3.25.1"
-  }
+	"name": "@shoppingjaws/safe-push",
+	"version": "0.7.8",
+	"description": "Git push safety checker - blocks pushes to forbidden areas",
+	"type": "module",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/shoppingjaws/safe-push"
+	},
+	"bin": {
+		"safe-push": "./dist/index.js"
+	},
+	"scripts": {
+		"build": "bun build ./src/index.ts --outdir ./dist --target bun",
+		"format": "oxfmt",
+		"format:check": "oxfmt --check",
+		"typecheck": "tsc --noEmit",
+		"dev": "bun run ./src/index.ts",
+		"generate-schema": "bun run ./scripts/generate-schema.ts"
+	},
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.27.1",
+		"@opentelemetry/api": "^1.9.0",
+		"@opentelemetry/exporter-trace-otlp-http": "^0.212.0",
+		"@opentelemetry/resources": "^2.5.1",
+		"@opentelemetry/sdk-trace-base": "^2.5.1",
+		"@opentelemetry/semantic-conventions": "^1.39.0",
+		"commander": "^12.1.0",
+		"jsonc-parser": "^3.3.1",
+		"zod": "^3.23.8"
+	},
+	"publishConfig": {
+		"registry": "https://npm.pkg.github.com"
+	},
+	"devDependencies": {
+		"@types/bun": "^1.4.2",
+		"@types/node": "^22.10.0",
+		"oxfmt": "0.68.0",
+		"typescript": "^7.0.2",
+		"zod-to-json-schema": "^3.25.1"
+	}
 }

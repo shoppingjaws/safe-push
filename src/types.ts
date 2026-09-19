@@ -22,10 +22,10 @@ export type TraceExporter = z.infer<typeof TraceExporterSchema>;
  * 設定ファイルのスキーマ
  */
 export const ConfigSchema = z.object({
-  forbiddenPaths: z.array(z.string()).default([".github/"]),
-  onForbidden: OnForbiddenSchema.default("error"),
-  allowedVisibility: z.array(RepoVisibilitySchema).optional(),
-  trace: TraceExporterSchema.optional(),
+	forbiddenPaths: z.array(z.string()).default([".github/"]),
+	onForbidden: OnForbiddenSchema.default("error"),
+	allowedVisibility: z.array(RepoVisibilitySchema).optional(),
+	trace: TraceExporterSchema.optional(),
 });
 export type Config = z.infer<typeof ConfigSchema>;
 
@@ -33,47 +33,47 @@ export type Config = z.infer<typeof ConfigSchema>;
  * Pushチェック結果
  */
 export interface CheckResult {
-  allowed: boolean;
-  reason: string;
-  details: {
-    isNewBranch: boolean;
-    isOwnLastCommit: boolean;
-    hasForbiddenChanges: boolean;
-    forbiddenFiles: string[];
-    forbiddenDiff?: Record<string, string>;
-    currentBranch: string;
-    authorEmail: string;
-    localEmail: string;
-    repoVisibility?: string;
-    visibilityAllowed?: boolean;
-  };
+	allowed: boolean;
+	reason: string;
+	details: {
+		isNewBranch: boolean;
+		isOwnLastCommit: boolean;
+		hasForbiddenChanges: boolean;
+		forbiddenFiles: string[];
+		forbiddenDiff?: Record<string, string>;
+		currentBranch: string;
+		authorEmail: string;
+		localEmail: string;
+		repoVisibility?: string;
+		visibilityAllowed?: boolean;
+	};
 }
 
 /**
  * Git操作関連のエラー
  */
 export class GitError extends Error {
-  constructor(
-    message: string,
-    public readonly command: string,
-    public readonly exitCode: number | null
-  ) {
-    super(message);
-    this.name = "GitError";
-  }
+	constructor(
+		message: string,
+		public readonly command: string,
+		public readonly exitCode: number | null,
+	) {
+		super(message);
+		this.name = "GitError";
+	}
 }
 
 /**
  * 設定ファイル関連のエラー
  */
 export class ConfigError extends Error {
-  constructor(
-    message: string,
-    public readonly path?: string
-  ) {
-    super(message);
-    this.name = "ConfigError";
-  }
+	constructor(
+		message: string,
+		public readonly path?: string,
+	) {
+		super(message);
+		this.name = "ConfigError";
+	}
 }
 
 /**
@@ -81,8 +81,8 @@ export class ConfigError extends Error {
  * process.exit() を直接呼ばず、index.ts で shutdown 後に exit する。
  */
 export class ExitError extends Error {
-  constructor(public readonly exitCode: number) {
-    super(`Process exiting with code ${exitCode}`);
-    this.name = "ExitError";
-  }
+	constructor(public readonly exitCode: number) {
+		super(`Process exiting with code ${exitCode}`);
+		this.name = "ExitError";
+	}
 }
