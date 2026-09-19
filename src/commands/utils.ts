@@ -105,3 +105,29 @@ export async function promptConfirm(message: string): Promise<boolean> {
 
   return false;
 }
+
+/**
+ * git diffを色付きで表示
+ */
+export function printGitDiff(diff: string): void {
+  console.log("");
+  console.log("Git diff to be pushed:");
+  console.log("───────────────────────────────────────");
+
+  if (!diff) {
+    console.log("(No diff)");
+  } else {
+    for (const line of diff.split("\n")) {
+      if (line.startsWith("+") && !line.startsWith("+++")) {
+        console.log(`\x1b[32m${line}\x1b[0m`);
+      } else if (line.startsWith("-") && !line.startsWith("---")) {
+        console.log(`\x1b[31m${line}\x1b[0m`);
+      } else {
+        console.log(line);
+      }
+    }
+  }
+
+  console.log("───────────────────────────────────────");
+  console.log("");
+}

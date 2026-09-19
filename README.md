@@ -36,7 +36,7 @@ safe-push check --json    # Output result as JSON
 
 ```bash
 safe-push push            # Check and push if allowed
-safe-push push --force    # Bypass safety checks
+safe-push push --force    # Show diff and confirm before bypassing safety checks
 safe-push push --dry-run  # Show result without actually pushing
 ```
 

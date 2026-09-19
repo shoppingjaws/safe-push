@@ -1,13 +1,14 @@
 import { Command } from "commander";
 import { loadConfig } from "../config";
 import { checkPush, checkVisibility } from "../checker";
-import { isGitRepository, hasCommits, execPush } from "../git";
+import { isGitRepository, hasCommits, execPush, getPushDiff } from "../git";
 import {
   printError,
   printInfo,
   printSuccess,
   printWarning,
   printCheckResultHuman,
+  printGitDiff,
   promptConfirm,
 } from "./utils";
 import { ExitError } from "../types";
@@ -66,9 +67,18 @@ export function createPushCommand(): Command {
         if (options.force) {
           printWarning("Safety checks bypassed with --force");
 
+          const diff = await getPushDiff();
+          printGitDiff(diff);
+
           if (options.dryRun) {
             printSuccess("Dry run: would push (checks bypassed)");
             throw new ExitError(0);
+          }
+
+          const confirmed = await promptConfirm("Push with safety checks bypassed?");
+          if (!confirmed) {
+            printError("Push cancelled by user");
+            throw new ExitError(1);
           }
 
           const result = await execPush(gitArgs);
