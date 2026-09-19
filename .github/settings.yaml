@@ -1,0 +1,9 @@
+repository:
+  delete_branch_on_merge: true
+
+environments:
+  - name: release
+    deployment_branch_policy:
+      custom_branches:
+        - name: "v*"
+          type: tag
