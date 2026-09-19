@@ -177,6 +177,20 @@ export async function getDiffContentForFiles(
 }
 
 /**
+ * push対象となるリモートとの差分を取得
+ */
+export async function getPushDiff(remote = "origin"): Promise<string> {
+  return withSpan("safe-push.git.getPushDiff", async () => {
+    const baseBranch = await getBaseBranch(remote);
+    if (!baseBranch) {
+      return "";
+    }
+
+    return execGit(["diff", `${baseBranch}...HEAD`]);
+  });
+}
+
+/**
  * git pushを実行
  */
 export async function execPush(
