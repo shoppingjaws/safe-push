@@ -3,26 +3,31 @@ import { GitError } from "./types";
 import { withSpan } from "./telemetry";
 
 /**
- * Gitコマンドを実行し、結果を返す
- */
+* Gitコマンドを実行し、結果を返す
+*/
 async function execGit(args: string[]): Promise<string> {
 	const command = `git ${args.join(" ")}`;
 	try {
-		const result = await $`git ${args}`.quiet();
+		const result = await $`git ${args} < ${Buffer.alloc(0)}`.quiet();
 		return result.stdout.toString().trim();
 	} catch (error) {
 		if (error && typeof error === "object" && "exitCode" in error) {
 			const exitCode = (error as { exitCode: number }).exitCode;
-			const stderr = "stderr" in error ? String((error as { stderr: unknown }).stderr) : "";
-			throw new GitError(`Git command failed: ${stderr || command}`, command, exitCode);
+			const stderr =
+				"stderr" in error ? String((error as { stderr: unknown }).stderr) : "";
+			throw new GitError(
+				`Git command failed: ${stderr || command}`,
+				command,
+				exitCode
+			);
 		}
 		throw new GitError(`Git command failed: ${command}`, command, null);
 	}
 }
 
 /**
- * 現在のブランチ名を取得
- */
+* 現在のブランチ名を取得
+*/
 export async function getCurrentBranch(): Promise<string> {
 	return withSpan("safe-push.git.getCurrentBranch", async () => {
 		return execGit(["rev-parse", "--abbrev-ref", "HEAD"]);
@@ -30,8 +35,8 @@ export async function getCurrentBranch(): Promise<string> {
 }
 
 /**
- * リモートに存在しない新規ブランチかどうかを判定
- */
+* リモートに存在しない新規ブランチかどうかを判定
+*/
 export async function isNewBranch(remote = "origin"): Promise<boolean> {
 	return withSpan("safe-push.git.isNewBranch", async () => {
 		const branch = await getCurrentBranch();
@@ -45,8 +50,8 @@ export async function isNewBranch(remote = "origin"): Promise<boolean> {
 }
 
 /**
- * 最後のコミットの作者メールアドレスを取得
- */
+* 最後のコミットの作者メールアドレスを取得
+*/
 export async function getLastCommitAuthorEmail(): Promise<string> {
 	return withSpan("safe-push.git.getLastCommitAuthorEmail", async () => {
 		return execGit(["log", "-1", "--format=%ae"]);
@@ -54,8 +59,8 @@ export async function getLastCommitAuthorEmail(): Promise<string> {
 }
 
 /**
- * ローカルのGit設定からメールアドレスを取得
- */
+* ローカルのGit設定からメールアドレスを取得
+*/
 export async function getLocalEmail(): Promise<string> {
 	return withSpan("safe-push.git.getLocalEmail", async () => {
 		// 環境変数が設定されている場合はそちらを優先
@@ -69,10 +74,10 @@ export async function getLocalEmail(): Promise<string> {
 }
 
 /**
- * リモートとの比較基準ブランチを取得
- * 新規ブランチの場合はmainまたはmasterを返す
- * mainもmasterもない場合はnullを返す
- */
+* リモートとの比較基準ブランチを取得
+* 新規ブランチの場合はmainまたはmasterを返す
+* mainもmasterもない場合はnullを返す
+*/
 async function getBaseBranch(remote = "origin"): Promise<string | null> {
 	const branch = await getCurrentBranch();
 	const isNew = await isNewBranch(remote);
@@ -95,9 +100,29 @@ async function getBaseBranch(remote = "origin"): Promise<string | null> {
 }
 
 /**
- * リモートとの差分ファイル一覧を取得
- * 新規ブランチの場合はmainまたはmasterとの差分を取得
- */
+* 共通祖先がない履歴では、HEAD 全体を新規追加として検査する。
+* shallow clone などで祖先を取得できない場合も検査を省略しない。
+*/
+async function getDiffRange(baseBranch: string): Promise<string[]> {
+	try {
+		await execGit(["merge-base", baseBranch, "HEAD"]);
+		return [`${baseBranch}...HEAD`];
+	} catch (error) {
+		// exit 1 だけが「共通祖先なし」。参照の破損などはそのまま報告する。
+		if (!(error instanceof GitError) || error.exitCode !== 1) {
+			throw error;
+		}
+	}
+
+	// ハッシュを固定せず、リポジトリの object format に合わせて空 tree を得る。
+	const emptyTree = await execGit(["hash-object", "-w", "-t", "tree", "--stdin"]);
+	return [emptyTree, "HEAD"];
+}
+
+/**
+* リモートとの差分ファイル一覧を取得
+* 新規ブランチの場合はmainまたはmasterとの差分を取得
+*/
 export async function getDiffFiles(remote = "origin", authorEmail?: string): Promise<string[]> {
 	return withSpan("safe-push.git.getDiffFiles", async () => {
 		const baseBranch = await getBaseBranch(remote);
@@ -116,7 +141,11 @@ export async function getDiffFiles(remote = "origin", authorEmail?: string): Pro
 				`${baseBranch}..HEAD`,
 			]);
 		} else {
-			output = await execGit(["diff", "--name-only", `${baseBranch}...HEAD`]);
+			output = await execGit([
+				"diff",
+				"--name-only",
+				...(await getDiffRange(baseBranch)),
+			]);
 		}
 		if (!output) {
 			return [];
@@ -128,8 +157,8 @@ export async function getDiffFiles(remote = "origin", authorEmail?: string): Pro
 }
 
 /**
- * 指定ファイルごとのdiffコンテンツを取得
- */
+* 指定ファイルごとのdiffコンテンツを取得
+*/
 export async function getDiffContentForFiles(
 	files: string[],
 	remote = "origin",
@@ -144,7 +173,9 @@ export async function getDiffContentForFiles(
 			return {};
 		}
 
-		const output = await execGit(["diff", `${baseBranch}...HEAD`, "--", ...files]);
+		const output = await execGit([
+			"diff", ...(await getDiffRange(baseBranch)), "--", ...files,
+		]);
 		if (!output) {
 			return {};
 		}
@@ -165,8 +196,8 @@ export async function getDiffContentForFiles(
 }
 
 /**
- * push対象となるリモートとの差分を取得
- */
+* push対象となるリモートとの差分を取得
+*/
 export async function getPushDiff(remote = "origin"): Promise<string> {
 	return withSpan("safe-push.git.getPushDiff", async () => {
 		const baseBranch = await getBaseBranch(remote);
@@ -174,13 +205,13 @@ export async function getPushDiff(remote = "origin"): Promise<string> {
 			return "";
 		}
 
-		return execGit(["diff", `${baseBranch}...HEAD`]);
+		return execGit(["diff", ...(await getDiffRange(baseBranch))]);
 	});
 }
 
 /**
- * git pushを実行
- */
+* git pushを実行
+*/
 export async function execPush(
 	args: string[] = [],
 	remote = "origin",
@@ -251,8 +282,8 @@ export async function execPush(
 }
 
 /**
- * リポジトリの visibility を取得（gh CLI を使用）
- */
+* リポジトリの visibility を取得（gh CLI を使用）
+*/
 export async function getRepoVisibility(): Promise<string> {
 	return withSpan("safe-push.git.getRepoVisibility", async () => {
 		const command = "gh repo view --json visibility --jq '.visibility'";
@@ -275,8 +306,8 @@ export async function getRepoVisibility(): Promise<string> {
 }
 
 /**
- * Gitリポジトリ内かどうかを確認
- */
+* Gitリポジトリ内かどうかを確認
+*/
 export async function isGitRepository(): Promise<boolean> {
 	return withSpan("safe-push.git.isGitRepository", async () => {
 		try {
@@ -289,8 +320,8 @@ export async function isGitRepository(): Promise<boolean> {
 }
 
 /**
- * コミットが存在するか確認
- */
+* コミットが存在するか確認
+*/
 export async function hasCommits(): Promise<boolean> {
 	return withSpan("safe-push.git.hasCommits", async () => {
 		try {
